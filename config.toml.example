@@ -1,0 +1,13 @@
+[discord]
+token = "PUTYOURAPITOKENHERE"
+default_guilds = []
+
+[lavalink]
+host = "xx.xx.xx.xx"
+password = "passwordgoeshere"
+
+[database]
+url = "sqlite+aiosqlite:///example.db"
+
+[openai]
+api_key = "apikeygoeshere"

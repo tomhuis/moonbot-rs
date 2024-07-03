@@ -1,0 +1,10 @@
+[package]
+name = "sunbot_config"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+toml.workspace = true
+once_cell.workspace = true
+serde.workspace = true
+
