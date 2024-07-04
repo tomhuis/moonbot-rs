@@ -44,7 +44,7 @@ pub struct OpenaiConfig {
 }
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct SentryConfig {
     pub dsn: Option<String>
 }

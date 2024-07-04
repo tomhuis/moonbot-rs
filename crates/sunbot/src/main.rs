@@ -1,6 +1,6 @@
 use poise::serenity_prelude as serenity;
 use sunbot_config::{self, config::SunbotConfig};
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod commands;
@@ -37,15 +37,8 @@ async fn on_ready(
     Ok(Data { _config: config })
 }
 
-#[tokio::main]
-async fn main() {
-    // Configue Logging
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
-        .finish();
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
-
-    let config = load_config();
+async fn bot_entrypoint() {
+    let config = sunbot_config::get_config();
 
     let commands = vec![
         commands::register::register_commands(),
@@ -80,4 +73,38 @@ async fn main() {
         .await;
 
     client.unwrap().start().await.unwrap()
+}
+
+fn main() {
+    // Configue Logging
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(Level::INFO)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+
+    let config = load_config();
+
+    let dsn = config
+        .sentry
+        .as_ref()
+        .and_then(|sentry| sentry.dsn.as_deref())
+        .unwrap_or("");
+
+    if dsn.is_empty() {
+        warn!("Sentry initialized with empty DSN - will be disabled")
+    }
+
+    let _guard = sentry::init((
+        dsn,
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        },
+    ));
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async { bot_entrypoint().await });
 }
