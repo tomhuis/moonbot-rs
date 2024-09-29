@@ -1,8 +1,8 @@
 use std::fs;
-use once_cell::sync::OnceCell;
+use std::sync::OnceLock;
 use crate::config::SunbotConfig;
 
-static GLOBAL_CONFIG: OnceCell<SunbotConfig> = OnceCell::new();
+static GLOBAL_CONFIG: OnceLock<SunbotConfig> = OnceLock::new();
 
 pub mod config;
 

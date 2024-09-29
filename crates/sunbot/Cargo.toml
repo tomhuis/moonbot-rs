@@ -1,22 +1,27 @@
 [package]
 name = "sunbot"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 build = "build.rs"
 
 [dependencies]
-sunbot_config.path = "../sunbot_config"
+sunbot_config = { path = "../sunbot_config" }
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tokio.workspace = true
 serenity.workspace = true
 poise.workspace = true
+lavalink-rs.workspace = true
 sysinfo.workspace = true
 humantime.workspace = true
 regex.workspace = true
 lazy_static.workspace = true
 rand.workspace = true
 sentry.workspace = true
+async-openai.workspace = true
+songbird.workspace = true
+serde_json.workspace = true
+futures.workspace = true
 
 [build-dependencies]
 built = {version = "0.7", features = ["cargo-lock", "chrono", "dependency-tree"]}
