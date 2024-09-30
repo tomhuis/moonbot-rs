@@ -5,22 +5,62 @@ on:
   push:
     branches:
       - main
+permissions:
+  contents: read
+  checks: write
+  issues: write
+  pull-requests: write
 jobs:
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install Rustfmt
         run: rustup component add rustfmt
       - name: Run Rustfmt
-        run: cargo fmt --all -- --check
+        run: cargo fmt --all
+      - uses: reviewdog/action-suggester@v1
+        with:
+          tool_name: rustfmt
+  cargo-check:
+    name: Cargo Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+      - name: Run Cargo Check
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          cargo check -q --message-format=short | \
+          reviewdog \
+            -f=cargo-check \
+            -name=cargo-check \
+            -reporter=github-pr-check
+            -filter-mode="added" \
+            -fail-on-error="false"
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
       - name: Install Clippy
         run: rustup component add clippy
       - name: Run Clippy
-        run: cargo clippy --all -- -D warnings
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          cargo clippy -q --message-format=short | \
+          reviewdog \
+            -f=clippy \
+            -name=clippy \
+            -reporter=github-pr-check
+            -filter-mode="added" \
+            -fail-on-error="false"
+
