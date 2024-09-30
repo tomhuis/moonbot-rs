@@ -42,7 +42,7 @@ jobs:
           reviewdog \
             -f=cargo-check \
             -name=cargo-check \
-            -reporter==${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }} \
+            -reporter=${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }} \
             -filter-mode="added" \
             -fail-on-error="false"
   clippy:
@@ -63,6 +63,6 @@ jobs:
           reviewdog \
             -f=clippy \
             -name=clippy \
-            -reporter==${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }} \
+            -reporter=${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }} \
             -filter-mode="added" \
             -fail-on-error="false"
