@@ -1,6 +1,6 @@
+use crate::config::SunbotConfig;
 use std::fs;
 use std::sync::OnceLock;
-use crate::config::SunbotConfig;
 
 static GLOBAL_CONFIG: OnceLock<SunbotConfig> = OnceLock::new();
 
@@ -11,8 +11,8 @@ pub fn load_config(path: &str) {
     let config: SunbotConfig = toml::from_str(&cfg_str).expect("Failed to deserialize ");
 
     GLOBAL_CONFIG
-		.set(config)
-		.unwrap_or_else(|_| panic!("don't call `load_config()` more than once"));
+        .set(config)
+        .unwrap_or_else(|_| panic!("don't call `load_config()` more than once"));
 }
 
 pub fn get_config() -> &'static SunbotConfig {

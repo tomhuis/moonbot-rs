@@ -1,7 +1,7 @@
-use lavalink_rs::{hook, model::events, prelude::*};
-use std::time::Duration;
-use poise::serenity_prelude as serenity;
 use humantime::format_duration;
+use lavalink_rs::{hook, model::events, prelude::*};
+use poise::serenity_prelude as serenity;
+use std::time::Duration;
 use tracing::debug;
 
 #[hook]
@@ -33,21 +33,26 @@ pub async fn track_start(client: LavalinkClient, _session_id: String, event: &ev
     let track = &event.track;
 
     let requester_id = track
-            .user_data
-            .as_ref()
-            .and_then(|data| data.get("requester_id"))
-            .unwrap_or(&serde_json::Value::Null);
+        .user_data
+        .as_ref()
+        .and_then(|data| data.get("requester_id"))
+        .unwrap_or(&serde_json::Value::Null);
 
     let embed = serenity::CreateEmbed::default()
         .color(0x2ECC71)
         .author(serenity::CreateEmbedAuthor::new("Now Playing"))
         .description(format!(
             "[{}](<{}>)",
-            track.info.title, track.info.uri.as_ref().unwrap_or(&String::new())
+            track.info.title,
+            track.info.uri.as_ref().unwrap_or(&String::new())
         ))
         .field("Requested By", format!("<@!{}>", requester_id), false)
         .field("Author", track.info.author.to_string(), false)
-        .field("Duration", format_duration(Duration::from_millis(track.info.length)).to_string(), false)
+        .field(
+            "Duration",
+            format_duration(Duration::from_millis(track.info.length)).to_string(),
+            false,
+        )
         .image(track.info.artwork_url.as_ref().unwrap_or(&String::new()));
 
     let _ = channel_id

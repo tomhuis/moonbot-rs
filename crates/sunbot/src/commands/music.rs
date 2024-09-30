@@ -1,12 +1,11 @@
-use crate::{Context, Error, utils::send_err_msg};
+use crate::{utils::send_err_msg, Context, Error};
+use futures::future;
+use futures::stream::StreamExt;
 use humantime::format_duration;
 use lavalink_rs::prelude::*;
 use poise::serenity_prelude as serenity;
 use std::ops::Deref;
 use std::time::Duration;
-use futures::future;
-use futures::stream::StreamExt;
-
 
 async fn _join(
     ctx: &Context<'_>,
@@ -30,7 +29,12 @@ async fn _join(
                 match user_channel_id {
                     Some(channel) => channel,
                     None => {
-                        send_err_msg(*ctx, "Error", "You are not in a voice channel, please join one first.").await;
+                        send_err_msg(
+                            *ctx,
+                            "Error",
+                            "You are not in a voice channel, please join one first.",
+                        )
+                        .await;
                         return Ok(false);
                     }
                 }
@@ -61,7 +65,12 @@ async fn _join(
                 return Ok(true);
             }
             Err(why) => {
-                send_err_msg(*ctx, "Error", format!("Error joining the channel: {}", why).as_str()).await;
+                send_err_msg(
+                    *ctx,
+                    "Error",
+                    format!("Error joining the channel: {}", why).as_str(),
+                )
+                .await;
                 return Err(why.into());
             }
         }
@@ -124,13 +133,14 @@ pub async fn play(
                 serenity::CreateEmbedAuthor::new("Playlist added to queue")
                     .icon_url(ctx.author().avatar_url().unwrap_or_default()),
             )
-            .description(format!(
-                "Added playlist {}",
-                info.name
-            ))
+            .description(format!("Added playlist {}", info.name))
             .field("Tracks", tracks.len().to_string(), false)
             .field("Position", position.to_string(), true)
-            .field("Duration", format_duration(Duration::from_millis(duration)).to_string(), true)
+            .field(
+                "Duration",
+                format_duration(Duration::from_millis(duration)).to_string(),
+                true,
+            )
     } else {
         let track = &tracks[0].track;
         embed
@@ -141,10 +151,15 @@ pub async fn play(
             .image(track.info.artwork_url.as_ref().unwrap_or(&String::new()))
             .description(format!(
                 "[{}](<{}>)",
-                track.info.title, track.info.uri.as_ref().unwrap_or(&String::new())
+                track.info.title,
+                track.info.uri.as_ref().unwrap_or(&String::new())
             ))
             .field("Position", position.to_string(), true)
-            .field("Duration", format_duration(Duration::from_millis(duration)).to_string(), true)
+            .field(
+                "Duration",
+                format_duration(Duration::from_millis(duration)).to_string(),
+                true,
+            )
     };
 
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
@@ -263,8 +278,7 @@ pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
             .color(0x2ECC71)
             .description("Queue is empty");
         ctx.send(poise::CreateReply::default().embed(embed)).await?;
-    }
-    else {
+    } else {
         let embed = serenity::CreateEmbed::new()
             .title("Skipped")
             .color(0x2ECC71)
@@ -327,5 +341,5 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
 
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
 
-    return Ok(())
+    return Ok(());
 }

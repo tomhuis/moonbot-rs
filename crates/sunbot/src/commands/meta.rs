@@ -1,7 +1,7 @@
 use crate::{Context, Error};
-use std::time::Duration;
 use humantime::format_duration;
 use serenity::builder::CreateEmbed;
+use std::time::Duration;
 
 /// Displays the ping/latency of the bot
 #[poise::command(slash_command)]
@@ -30,12 +30,24 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
     let embed = CreateEmbed::new()
         .title(format!("{}'s Information", user.name))
         .thumbnail(user.avatar_url().unwrap_or(user.default_avatar_url()))
-        .field("Language", format!("Rust {}", crate::built_info::RUSTC_VERSION), false)
+        .field(
+            "Language",
+            format!("Rust {}", crate::built_info::RUSTC_VERSION),
+            false,
+        )
         .field("Bot Version", crate::built_info::PKG_VERSION, false)
         .field("Dependencies", dependencies.join("\n"), false)
-        .field("Uptime", format_duration(Duration::from_secs(process.run_time())).to_string(), false)
+        .field(
+            "Uptime",
+            format_duration(Duration::from_secs(process.run_time())).to_string(),
+            false,
+        )
         .field("CPU Usage", format!("{:.2}", process.cpu_usage()), false)
-        .field("Memory", format!("{:.2} MB", (process.memory() / 1024 / 1024)), false)
+        .field(
+            "Memory",
+            format!("{:.2} MB", (process.memory() / 1024 / 1024)),
+            false,
+        )
         .field("Author", "<@116586345115287558>", false);
 
     let reply = poise::CreateReply::default().embed(embed);

@@ -1,8 +1,8 @@
 use crate::{Data, Error};
 use lazy_static::lazy_static;
 use poise::serenity_prelude as serenity;
-use regex::{Regex, RegexBuilder};
 use rand::Rng;
+use regex::{Regex, RegexBuilder};
 
 lazy_static! {
     static ref PATTERN: Regex = RegexBuilder::new(r"\bi(?:'| +a|’)?m +([\w ]*)")
@@ -28,12 +28,18 @@ pub async fn handle_message(
             }
             if rand::thread_rng().gen::<f64>() < 0.8 {
                 let bot_user = framework.bot_id.to_user(&ctx.http).await?;
-                message.reply_ping(&ctx.http, format!("Hi {}, I'm {}", name.as_str(), bot_user.name)).await?;
+                message
+                    .reply_ping(
+                        &ctx.http,
+                        format!("Hi {}, I'm {}", name.as_str(), bot_user.name),
+                    )
+                    .await?;
 
                 if let Some(guild) = message.guild_id {
-                    let builder = serenity::EditMember::new()
-                        .nickname(name.as_str());
-                    guild.edit_member(&ctx.http, &message.author, builder).await?;
+                    let builder = serenity::EditMember::new().nickname(name.as_str());
+                    guild
+                        .edit_member(&ctx.http, &message.author, builder)
+                        .await?;
                 }
             }
         }

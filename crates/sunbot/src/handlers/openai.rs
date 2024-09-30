@@ -1,11 +1,8 @@
-use crate::{Data, Error, utils::is_reply_or_mention};
+use crate::{utils::is_reply_or_mention, Data, Error};
 use async_openai::types::{
-    ChatCompletionRequestAssistantMessageArgs, 
-    ChatCompletionRequestSystemMessageArgs,
-    ChatCompletionRequestUserMessageContentPart,
-    ChatCompletionRequestMessageContentPartImageArgs,
-    ChatCompletionRequestMessageContentPartTextArgs, 
-    ChatCompletionRequestUserMessageArgs,
+    ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestMessageContentPartImageArgs,
+    ChatCompletionRequestMessageContentPartTextArgs, ChatCompletionRequestSystemMessageArgs,
+    ChatCompletionRequestUserMessageArgs, ChatCompletionRequestUserMessageContentPart,
     CreateChatCompletionRequestArgs,
 };
 use poise::serenity_prelude as serenity;
@@ -34,7 +31,7 @@ pub async fn generate_response(
     messages.insert(0, message.clone());
 
     let mut chat_messages: Vec<async_openai::types::ChatCompletionRequestMessage> = vec![];
-    
+
     // Include system context
     for ctx in framework.user_data.config.openai.auto.system_context.iter() {
         chat_messages.push(
@@ -42,7 +39,7 @@ pub async fn generate_response(
                 .content(ctx.as_str())
                 .build()
                 .unwrap()
-                .into()
+                .into(),
         );
     }
 
@@ -122,14 +119,12 @@ pub async fn generate_response(
     Ok(())
 }
 
-
 // Handle replies to the Bot
 pub async fn handle_reply(
     ctx: &serenity::Context,
     framework: poise::FrameworkContext<'_, Data, Error>,
     message: &serenity::Message,
 ) -> Result<(), Error> {
-
     if message.author.bot || message.content.is_empty() {
         return Ok(());
     }
@@ -175,7 +170,10 @@ pub async fn handle_random_message(
     if rand::thread_rng().gen::<f64>()
         < framework.user_data.config.openai.auto.random.trigger_chance
     {
-        info!("Trigggered Random Reply on random message: {}", message.content);
+        info!(
+            "Trigggered Random Reply on random message: {}",
+            message.content
+        );
         let result = generate_response(ctx, framework, &message).await;
         // If we responded, update the last response time
         if result.is_ok() {

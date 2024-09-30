@@ -1,9 +1,9 @@
 use crate::{Data, Error};
 use poise::serenity_prelude as serenity;
 
-mod openai;
 mod dad;
 pub mod lavalink;
+mod openai;
 
 pub async fn handler(
     ctx: &serenity::Context,

@@ -17,7 +17,7 @@ pub struct SunbotConfig {
 #[serde(default)]
 pub struct DiscordConfig {
     // The Discord token for the bot
-    pub token: String
+    pub token: String,
 }
 
 #[derive(Debug, Deserialize)]
