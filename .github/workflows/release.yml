@@ -13,12 +13,12 @@ jobs:
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
-          registry: https://ghcr.io
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Promote images
         env:
-          REPOSITORY: https://ghcr.io
+          REPOSITORY: ghcr.io
           PROJECT: aaronfoley
           IMAGE_NAME: sunbot-rs
         run: |
