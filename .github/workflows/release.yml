@@ -23,5 +23,5 @@ jobs:
           IMAGE_NAME: sunbot-rs
         run: |
           IMAGE="${REPOSITORY}/${PROJECT}/${IMAGE_NAME,,}"
-          docker buildx imagetools create $IMAGE:${{ github.sha }} \
+          docker buildx imagetools create $IMAGE:sha-${GITHUB_SHA::7} \
             --tag $IMAGE:${{ github.ref_name }}
