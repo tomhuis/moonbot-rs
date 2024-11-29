@@ -3,20 +3,26 @@ FROM rust:1.81.0-slim-bookworm AS builder
 WORKDIR /sunbot
 
 RUN apt-get update \
-    && apt-get upgrade \
-    && apt-get install -y pkg-config libssl-dev
+    && apt-get upgrade -y \
+    && apt-get install -y pkg-config libssl-dev \
+    && apt-get autoremove --purge -y $(cat /tmp/cleanup-packages.txt) && \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apk/
 
-# Copy only the Cargo files so that this layer only contains the dependencies
+    # Copy only the Cargo files so that this layer only contains the dependencies
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
 
 # We need to create dummy projects for each crate
 RUN USER=root cargo new --bin crates/sunbot
 RUN USER=root cargo new --lib crates/sunbot_config
+RUN USER=root cargo new --lib crates/sunbot_db
+RUN USER=root cargo new --lib crates/sunbot_migrations
 
 COPY crates/sunbot/build.rs ./crates/sunbot/
 COPY crates/sunbot/Cargo.toml ./crates/sunbot/
 COPY crates/sunbot_config/Cargo.toml ./crates/sunbot_config/
+COPY crates/sunbot_db/Cargo.toml ./crates/sunbot_db/
+COPY crates/sunbot_migrations/Cargo.toml ./crates/sunbot_migrations/
 
 RUN cargo build --release
 RUN rm -rf crates/**/*.rs
@@ -34,9 +40,10 @@ WORKDIR /sunbot
 ENV TZ=Australia/Sydney
 
 RUN apt-get update \
-    && apt-get upgrade \
+    && apt-get upgrade -y \
     && apt-get install -y pkg-config libssl-dev ca-certificates tzdata \
-    && rm -rf /var/cache/apk/*
+    && apt-get autoremove --purge -y $(cat /tmp/cleanup-packages.txt) && \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apk/
 
 COPY --from=builder /sunbot/target/release/sunbot /sunbot
 
