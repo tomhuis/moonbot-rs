@@ -1,7 +1,9 @@
 use lavalink_rs::{model::events, prelude::*};
 use poise::serenity_prelude as serenity;
+use sea_orm::DatabaseConnection;
 use songbird::SerenityInit;
 use sunbot_config::{self, config::SunbotConfig};
+use sunbot_db::{get_db, init_db};
 use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
@@ -17,18 +19,12 @@ pub mod built_info {
 pub struct Data {
     config: &'static SunbotConfig,
     openai_client: Option<async_openai::Client<async_openai::config::OpenAIConfig>>,
-    lavalink: LavalinkClient,
+    lavalink: Option<LavalinkClient>,
+    db: &'static DatabaseConnection,
 }
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
-
-fn load_config() -> &'static SunbotConfig {
-    let cfg_path = std::env::var("SUNBOT_CONFIG_FILE").unwrap_or(String::from("config.toml"));
-    info!("Loading configuration from: {}", cfg_path);
-    sunbot_config::load_config(&cfg_path);
-    sunbot_config::get_config()
-}
 
 async fn on_ready(
     ctx: &serenity::Context,
@@ -38,42 +34,55 @@ async fn on_ready(
     info!("Logged in as {}", ready.user.name);
     let config: &SunbotConfig = sunbot_config::get_config();
 
-    // TODO: Setup/Configure DB access
+    // Initialize the database
+    init_db(&config.database.url).await;
 
-    // Attempt to get the openai client
-    let openai_client = Some(async_openai::Client::with_config(
-        async_openai::config::OpenAIConfig::new().with_api_key(config.openai.api_key.as_str()),
-    ));
+    // Configure OpenAI
+    let openai_client = if !config.openai.api_key.is_empty() {
+        Some(async_openai::Client::with_config(
+            async_openai::config::OpenAIConfig::new().with_api_key(config.openai.api_key.as_str()),
+        ))
+    } else {
+        None
+    };
 
     // Setup Lavalink
-    let events = events::Events {
-        raw: Some(handlers::lavalink::raw_event),
-        ready: Some(handlers::lavalink::ready_event),
-        track_start: Some(handlers::lavalink::track_start),
-        ..Default::default()
-    };
+    let lavalink_client = if !config.lavalink.host.is_empty() {
+        let events = events::Events {
+            raw: Some(handlers::lavalink::raw_event),
+            ready: Some(handlers::lavalink::ready_event),
+            track_start: Some(handlers::lavalink::track_start),
+            ..Default::default()
+        };
 
-    let lavalink_host = format!("{}:{}", config.lavalink.host, config.lavalink.port);
-    let node_local = NodeBuilder {
-        hostname: lavalink_host,
-        is_ssl: config.lavalink.use_ssl,
-        events: events::Events::default(),
-        password: config.lavalink.password.clone(),
-        user_id: ctx.cache.current_user().id.into(),
-        session_id: None,
-    };
+        let lavalink_host = format!("{}:{}", config.lavalink.host, config.lavalink.port);
 
-    let lavalink_client = LavalinkClient::new(
-        events,
-        vec![node_local],
-        NodeDistributionStrategy::round_robin(),
-    )
-    .await;
+        let node_local = NodeBuilder {
+            hostname: lavalink_host,
+            is_ssl: config.lavalink.use_ssl,
+            events: events::Events::default(),
+            password: config.lavalink.password.clone(),
+            user_id: ctx.cache.current_user().id.into(),
+            session_id: None,
+        };
+
+        Some(
+            LavalinkClient::new(
+                events,
+                vec![node_local],
+                NodeDistributionStrategy::round_robin(),
+            )
+            .await,
+        )
+    } else {
+        None
+    };
 
     Ok(Data {
-        config: config,
-        openai_client: openai_client,
+        config,
+        openai_client,
         lavalink: lavalink_client,
+        db: get_db().await,
     })
 }
 
@@ -96,7 +105,7 @@ async fn bot_entrypoint() {
     ];
 
     let options = poise::FrameworkOptions {
-        commands: commands,
+        commands,
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("~".into()),
             execute_self_messages: false,
@@ -132,7 +141,7 @@ fn main() {
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
-    let config = load_config();
+    let config = sunbot_config::load_config();
 
     if config.discord.token.is_empty() {
         panic!("Discord token is not set in the configuration file");

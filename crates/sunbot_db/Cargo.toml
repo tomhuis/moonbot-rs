@@ -1,0 +1,14 @@
+[package]
+name = "sunbot_db"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "sunbot_db"
+path = "src/lib.rs"
+
+[dependencies]
+sunbot_migrations = { path = "../sunbot_migrations" }
+tokio.workspace = true
+sea-orm.workspace = true

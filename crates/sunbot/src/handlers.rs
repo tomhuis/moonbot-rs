@@ -1,5 +1,8 @@
 use crate::{Data, Error};
 use poise::serenity_prelude as serenity;
+use sea_orm::*;
+use sunbot_db::entities::prelude::*;
+use tracing::info;
 
 mod dad;
 pub mod lavalink;
@@ -16,6 +19,17 @@ pub async fn handler(
             dad::handle_message(ctx, framework, new_message).await?;
             openai::handle_random_message(ctx, framework, new_message).await?;
             openai::handle_reply(ctx, framework, new_message).await?;
+        }
+        serenity::FullEvent::GuildCreate { guild, .. } => {
+            info!("Joined Guild {}: {}", guild.id, guild.name);
+            let guild = sunbot_db::entities::guild::ActiveModel {
+                id: ActiveValue::Set(guild.id.get() as i64),
+                ..Default::default()
+            };
+            Guild::insert(guild)
+                .on_conflict_do_nothing()
+                .exec(framework.user_data.db)
+                .await?;
         }
         _ => {}
     }

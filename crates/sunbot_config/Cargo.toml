@@ -2,8 +2,14 @@
 name = "sunbot_config"
 version = "0.2.0"
 edition = "2021"
+publish = false
+
+[lib]
+name = "sunbot_config"
+path = "src/lib.rs"
 
 [dependencies]
 toml.workspace = true
 once_cell.workspace = true
 serde.workspace = true
+tracing.workspace = true

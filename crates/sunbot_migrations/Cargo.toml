@@ -1,0 +1,16 @@
+[package]
+name = "sunbot_migrations"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "sunbot_migrations"
+path = "src/lib.rs"
+
+[dependencies]
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+
+[dependencies.sea-orm-migration]
+version = "1.1.0"
+features = ["sqlx-postgres", "sqlx-sqlite", "runtime-tokio-native-tls"]

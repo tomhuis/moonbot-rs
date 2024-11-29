@@ -131,7 +131,7 @@ pub async fn handle_reply(
 
     if is_reply_or_mention(ctx, message, framework.bot_id).await {
         info!("Triggered Reply on message: {}", message.content);
-        return generate_response(ctx, framework, &message).await;
+        return generate_response(ctx, framework, message).await;
     }
 
     Ok(())
@@ -174,7 +174,7 @@ pub async fn handle_random_message(
             "Trigggered Random Reply on random message: {}",
             message.content
         );
-        let result = generate_response(ctx, framework, &message).await;
+        let result = generate_response(ctx, framework, message).await;
         // If we responded, update the last response time
         if result.is_ok() {
             LAST_RESPONSE.store(

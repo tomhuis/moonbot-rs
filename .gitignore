@@ -1,3 +1,5 @@
 /target
 config.toml
 .scratch
+.env
+db.sqlite

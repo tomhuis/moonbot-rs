@@ -23,12 +23,12 @@ pub async fn is_reply_or_mention(
         }
     }
 
-    if message.mentions_user_id(user_id) == true {
+    if message.mentions_user_id(user_id) {
         info!("Mention detected: {}", message.content);
         return true;
     }
 
-    return false;
+    false
 }
 
 /// Reply with an error message

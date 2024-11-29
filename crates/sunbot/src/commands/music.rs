@@ -1,6 +1,5 @@
 use crate::{utils::send_err_msg, Context, Error};
-use futures::future;
-use futures::stream::StreamExt;
+use futures::{future, StreamExt};
 use humantime::format_duration;
 use lavalink_rs::prelude::*;
 use poise::serenity_prelude as serenity;
@@ -12,7 +11,13 @@ async fn _join(
     guild_id: serenity::GuildId,
     channel_id: Option<serenity::ChannelId>,
 ) -> Result<bool, Error> {
-    let lava_client = ctx.data().lavalink.clone();
+    let lava_client = match &ctx.data().lavalink {
+        Some(x) => x,
+        None => {
+            send_err_msg(*ctx, "Error", "Lavalink client is not available.").await;
+            return Ok(false);
+        }
+    };
 
     let manager = songbird::get(ctx.serenity_context()).await.unwrap().clone();
 
@@ -88,19 +93,25 @@ pub async fn play(
     term: String,
 ) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
-    let lava_client = ctx.data().lavalink.clone();
+
+    let lava_client = match &ctx.data().lavalink {
+        Some(x) => x,
+        None => {
+            send_err_msg(ctx, "Error", "Lavalink client is not available.").await;
+            return Ok(());
+        }
+    };
+
     let has_joined = _join(&ctx, guild_id, None).await?;
     let Some(player) = lava_client.get_player_context(guild_id) else {
         return Ok(());
     };
 
-    let query: String;
-
-    if term.starts_with("http") {
-        query = term;
+    let query = if term.starts_with("http") {
+        term
     } else {
-        query = SearchEngines::YouTube.to_query(&term)?;
-    }
+        SearchEngines::YouTube.to_query(&term)?
+    };
 
     let loaded_tracks = lava_client.load_tracks(guild_id, &query).await?;
     let mut playlist_info = None;
@@ -118,7 +129,7 @@ pub async fn play(
     };
 
     let mut duration = 0;
-    let position = player.get_queue().get_count().await.unwrap_or(0);
+    let position = player.get_queue().get_count().await.unwrap_or(1);
 
     for i in &mut tracks {
         i.track.user_data = Some(serde_json::json!({"requester_id": ctx.author().id.get()}));
@@ -135,7 +146,7 @@ pub async fn play(
             )
             .description(format!("Added playlist {}", info.name))
             .field("Tracks", tracks.len().to_string(), false)
-            .field("Position", position.to_string(), true)
+            .field("Position", format!("#{}", position), true)
             .field(
                 "Duration",
                 format_duration(Duration::from_millis(duration)).to_string(),
@@ -154,7 +165,7 @@ pub async fn play(
                 track.info.title,
                 track.info.uri.as_ref().unwrap_or(&String::new())
             ))
-            .field("Position", position.to_string(), true)
+            .field("Position", format!("#{}", position), true)
             .field(
                 "Duration",
                 format_duration(Duration::from_millis(duration)).to_string(),
@@ -198,7 +209,14 @@ pub async fn join(
 pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
     let manager = songbird::get(ctx.serenity_context()).await.unwrap().clone();
-    let lava_client = ctx.data().lavalink.clone();
+
+    let lava_client = match &ctx.data().lavalink {
+        Some(x) => x,
+        None => {
+            send_err_msg(ctx, "Error", "Lavalink client is not available.").await;
+            return Ok(());
+        }
+    };
 
     if lava_client.get_player_context(guild_id).is_none() {
         send_err_msg(ctx, "Error", "Im not playing anything! :rage:").await;
@@ -224,7 +242,15 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn pause(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
-    let lava_client = ctx.data().lavalink.clone();
+
+    let lava_client = match &ctx.data().lavalink {
+        Some(x) => x,
+        None => {
+            send_err_msg(ctx, "Error", "Lavalink client is not available.").await;
+            return Ok(());
+        }
+    };
+
     let Some(player) = lava_client.get_player_context(guild_id) else {
         send_err_msg(ctx, "Error", "Join the bot to a voice channel first.").await;
         return Ok(());
@@ -244,7 +270,15 @@ pub async fn pause(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn resume(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
-    let lava_client = ctx.data().lavalink.clone();
+
+    let lava_client = match &ctx.data().lavalink {
+        Some(x) => x,
+        None => {
+            send_err_msg(ctx, "Error", "Lavalink client is not available.").await;
+            return Ok(());
+        }
+    };
+
     let Some(player) = lava_client.get_player_context(guild_id) else {
         send_err_msg(ctx, "Error", "Join the bot to a voice channel first.").await;
         return Ok(());
@@ -265,7 +299,15 @@ pub async fn resume(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
-    let lava_client = ctx.data().lavalink.clone();
+
+    let lava_client = match &ctx.data().lavalink {
+        Some(x) => x,
+        None => {
+            send_err_msg(ctx, "Error", "Lavalink client is not available.").await;
+            return Ok(());
+        }
+    };
+
     let Some(player) = lava_client.get_player_context(guild_id) else {
         send_err_msg(ctx, "Error", "Join the bot to a voice channel first.").await;
         return Ok(());
@@ -293,7 +335,15 @@ pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
-    let lava_client = ctx.data().lavalink.clone();
+
+    let lava_client = match &ctx.data().lavalink {
+        Some(x) => x,
+        None => {
+            send_err_msg(ctx, "Error", "Lavalink client is not available.").await;
+            return Ok(());
+        }
+    };
+
     let Some(player) = lava_client.get_player_context(guild_id) else {
         send_err_msg(ctx, "Error", "Join the bot to a voice channel first.").await;
         return Ok(());
@@ -312,7 +362,7 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
                 x.track.info.author,
                 x.track.info.title,
                 x.track.info.uri.as_ref().unwrap_or(&String::new()),
-                format_duration(Duration::from_millis(x.track.info.length)).to_string(),
+                format_duration(Duration::from_millis(x.track.info.length)),
                 x.track.user_data.unwrap()["requester_id"]
             )
         })
@@ -326,7 +376,7 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
             track.info.author,
             track.info.title,
             track.info.uri.as_ref().unwrap_or(&String::new()),
-            format_duration(Duration::from_millis(track.info.length)).to_string(),
+            format_duration(Duration::from_millis(track.info.length)),
             track.user_data.unwrap()["requester_id"]
         )
     } else {
@@ -341,5 +391,5 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
 
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
 
-    return Ok(());
+    Ok(())
 }

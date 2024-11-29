@@ -1,8 +1,5 @@
 use serde::Deserialize;
 
-// TODO: Remove the Option<> below and implement sane defaults
-//       It's too hard dealing with these options been possible unset
-
 #[derive(Debug, Deserialize, Default)]
 #[serde(default)]
 pub struct SunbotConfig {
@@ -54,12 +51,12 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         DatabaseConfig {
-            url: String::from("mongodb://localhost:27017"),
+            url: String::from("sqlite://sunbot.sqlite?mode=rwc"),
         }
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 #[serde(default)]
 pub struct OpenAIConfig {
     // The OpenAI API Key
@@ -70,17 +67,6 @@ pub struct OpenAIConfig {
     pub genimage: OpenAIGenImage,
     // Configuration for the automatic replies
     pub auto: OpenAIAuto,
-}
-
-impl Default for OpenAIConfig {
-    fn default() -> Self {
-        OpenAIConfig {
-            api_key: String::from(""),
-            askgpt: OpenAIAskgpt::default(),
-            genimage: OpenAIGenImage::default(),
-            auto: OpenAIAuto::default(),
-        }
-    }
 }
 
 #[derive(Debug, Deserialize)]

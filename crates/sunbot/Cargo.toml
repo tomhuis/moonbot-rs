@@ -6,6 +6,7 @@ build = "build.rs"
 
 [dependencies]
 sunbot_config = { path = "../sunbot_config" }
+sunbot_db = { path = "../sunbot_db" }
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tokio.workspace = true
@@ -22,6 +23,7 @@ async-openai.workspace = true
 songbird.workspace = true
 serde_json.workspace = true
 futures.workspace = true
+sea-orm.workspace = true
 
 [build-dependencies]
 built = {version = "0.7", features = ["cargo-lock", "chrono", "dependency-tree"]}
