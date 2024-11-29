@@ -201,6 +201,14 @@ pub async fn join(
 ) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
     _join(&ctx, guild_id, channel_id).await?;
+
+    ctx.send(
+        poise::CreateReply::default()
+            .content("Joined the voice channel.")
+            .ephemeral(true),
+    )
+    .await?;
+
     Ok(())
 }
 
@@ -230,9 +238,11 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
     }
 
     let embed = serenity::CreateEmbed::new()
-        .title("Left")
-        .color(0x2ECC71)
-        .description("Stopped playing music and left the voice channel.");
+        .author(
+            serenity::CreateEmbedAuthor::new("Stopped playing music")
+                .icon_url(ctx.author().avatar_url().unwrap_or_default()),
+        )
+        .color(0x2ECC71);
 
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
     Ok(())
@@ -258,9 +268,11 @@ pub async fn pause(ctx: Context<'_>) -> Result<(), Error> {
     player.set_pause(true).await?;
 
     let embed = serenity::CreateEmbed::new()
-        .title("Paused")
-        .color(0x2ECC71)
-        .description("Music has been paused.");
+        .author(
+            serenity::CreateEmbedAuthor::new("Paused Music")
+                .icon_url(ctx.author().avatar_url().unwrap_or_default()),
+        )
+        .color(0x2ECC71);
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
 
     Ok(())
@@ -287,9 +299,11 @@ pub async fn resume(ctx: Context<'_>) -> Result<(), Error> {
     player.set_pause(false).await?;
 
     let embed = serenity::CreateEmbed::new()
-        .title("Resumed")
-        .color(0x2ECC71)
-        .description("Music has been resumed.");
+        .author(
+            serenity::CreateEmbedAuthor::new("Resumed Music")
+                .icon_url(ctx.author().avatar_url().unwrap_or_default()),
+        )
+        .color(0x2ECC71);
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
 
     Ok(())
@@ -316,13 +330,19 @@ pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
 
     if player.get_queue().get_count().await? == 0 {
         let embed = serenity::CreateEmbed::new()
-            .title("Queue is empty")
+            .author(
+                serenity::CreateEmbedAuthor::new("Skipped")
+                    .icon_url(ctx.author().avatar_url().unwrap_or_default()),
+            )
             .color(0x2ECC71)
             .description("Queue is empty");
         ctx.send(poise::CreateReply::default().embed(embed)).await?;
     } else {
         let embed = serenity::CreateEmbed::new()
-            .title("Skipped")
+            .author(
+                serenity::CreateEmbedAuthor::new("Skipped")
+                    .icon_url(ctx.author().avatar_url().unwrap_or_default()),
+            )
             .color(0x2ECC71)
             .description("Skipped the current song");
         ctx.send(poise::CreateReply::default().embed(embed)).await?;
@@ -350,34 +370,42 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
     };
 
     let queue = player.get_queue();
+    let queue_count = queue.get_count().await?;
     let player_data = player.get_player().await?;
-    let max = queue.get_count().await?.min(9);
-    let queue_message = queue
+    let max = queue_count.min(5);
+    let mut queue_message = queue
         .enumerate()
         .take_while(|(idx, _)| future::ready(*idx < max))
         .map(|(idx, x)| {
             format!(
-                "🔹{} [{} - {}](<{}>) | {} | <@!{}>",
+                "**{} - **[{} - {}](<{}>)\n*Requested By <@!{}>* | {}\n",
                 idx + 1,
                 x.track.info.author,
                 x.track.info.title,
                 x.track.info.uri.as_ref().unwrap_or(&String::new()),
+                x.track.user_data.unwrap()["requester_id"],
                 format_duration(Duration::from_millis(x.track.info.length)),
-                x.track.user_data.unwrap()["requester_id"]
             )
         })
         .collect::<Vec<_>>()
         .await
         .join("\n");
 
+    if queue_count > max {
+        queue_message.push_str(&format!("\n\nAnd {} more...", queue_count - max));
+    }
+
+    let song_position = player.get_player().await.unwrap().state.position;
     let now_playing_message = if let Some(track) = player_data.track {
         format!(
-            "🔊 Now Playing: [{} - {}](<{}>) | {} | <@!{}>",
+            "[{} - {}](<{}>)\n*Requested by <@!{}>*\n{} Left\n",
             track.info.author,
             track.info.title,
             track.info.uri.as_ref().unwrap_or(&String::new()),
-            format_duration(Duration::from_millis(track.info.length)),
-            track.user_data.unwrap()["requester_id"]
+            track.user_data.unwrap()["requester_id"],
+            format_duration(Duration::from_millis(
+                (track.info.length - song_position) / 1000 * 1000
+            ))
         )
     } else {
         "No song is currently playing".to_string()
@@ -386,8 +414,8 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
     let embed = serenity::CreateEmbed::new()
         .title("Queue")
         .color(0x2ECC71)
-        .description(queue_message)
-        .field("Now Playing", now_playing_message, false);
+        .field("Now Playing", now_playing_message, false)
+        .field("Queue", queue_message, false);
 
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
 

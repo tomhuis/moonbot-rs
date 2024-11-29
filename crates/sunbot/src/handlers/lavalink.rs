@@ -46,12 +46,12 @@ pub async fn track_start(client: LavalinkClient, _session_id: String, event: &ev
             track.info.title,
             track.info.uri.as_ref().unwrap_or(&String::new())
         ))
-        .field("Requested By", format!("<@!{}>", requester_id), false)
-        .field("Author", track.info.author.to_string(), false)
+        .field("Requested By", format!("<@!{}>", requester_id), true)
+        .field("Author", track.info.author.to_string(), true)
         .field(
             "Duration",
             format_duration(Duration::from_millis(track.info.length)).to_string(),
-            false,
+            true,
         )
         .image(track.info.artwork_url.as_ref().unwrap_or(&String::new()));
 
