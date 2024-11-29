@@ -3984,7 +3984,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sunbot"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-openai",
  "base64 0.22.1",
@@ -4011,7 +4011,7 @@ dependencies = [
 
 [[package]]
 name = "sunbot_config"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "once_cell",
  "serde",
@@ -4021,7 +4021,7 @@ dependencies = [
 
 [[package]]
 name = "sunbot_db"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "sea-orm",
  "sunbot_migrations",
@@ -4030,7 +4030,7 @@ dependencies = [
 
 [[package]]
 name = "sunbot_migrations"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "async-std",
  "sea-orm-migration",

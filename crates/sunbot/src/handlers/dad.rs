@@ -5,7 +5,7 @@ use rand::Rng;
 use regex::{Regex, RegexBuilder};
 
 lazy_static! {
-    static ref PATTERN: Regex = RegexBuilder::new(r"\bi(?:'| +a|’)?m +([\w ]*)")
+    static ref PATTERN: Regex = RegexBuilder::new(r"\bi(?:'| +a|’)?m +([\w\- ]*)")
         .case_insensitive(true)
         .build()
         .unwrap();
