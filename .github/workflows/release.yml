@@ -24,6 +24,6 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           export IMAGE="${REPOSITORY}/${PROJECT}/${IMAGE_NAME,,}" \
-          echo "Promoting image $IMAGE:sha-${GITHUB_SHA::7} to $IMAGE:${{ github.ref_name }}" \
+          && echo "Promoting image $IMAGE:sha-${GITHUB_SHA::7} to $IMAGE:${{ github.ref_name }}" \
           && docker buildx imagetools create $IMAGE:sha-${GITHUB_SHA::7} \
             --tag $IMAGE:${{ github.ref_name }}
