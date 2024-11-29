@@ -21,7 +21,9 @@ jobs:
           REPOSITORY: ghcr.io
           PROJECT: aaronfoley
           IMAGE_NAME: sunbot-rs
+          GITHUB_SHA: ${{ github.sha }}
         run: |
-          IMAGE="${REPOSITORY}/${PROJECT}/${IMAGE_NAME,,}"
-          docker buildx imagetools create $IMAGE:sha-${GITHUB_SHA::7} \
+          IMAGE="${REPOSITORY}/${PROJECT}/${IMAGE_NAME,,}" \
+          echo "Promoting image $IMAGE:${GITHUB_SHA::7} to $IMAGE:${{ github.ref_name }}" \
+          && docker buildx imagetools create $IMAGE:${GITHUB_SHA::7} \
             --tag $IMAGE:${{ github.ref_name }}
