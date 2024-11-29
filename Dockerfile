@@ -5,7 +5,7 @@ WORKDIR /sunbot
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y pkg-config libssl-dev \
-    && apt-get autoremove --purge -y $(cat /tmp/cleanup-packages.txt) && \
+    && apt-get autoremove --purge -y $(cat /tmp/cleanup-packages.txt) \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apk/
 
     # Copy only the Cargo files so that this layer only contains the dependencies
@@ -42,7 +42,7 @@ ENV TZ=Australia/Sydney
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y pkg-config libssl-dev ca-certificates tzdata \
-    && apt-get autoremove --purge -y $(cat /tmp/cleanup-packages.txt) && \
+    && apt-get autoremove --purge -y $(cat /tmp/cleanup-packages.txt) \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apk/
 
 COPY --from=builder /sunbot/target/release/sunbot /sunbot
