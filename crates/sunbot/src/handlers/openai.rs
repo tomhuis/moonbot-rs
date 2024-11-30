@@ -8,7 +8,7 @@ use async_openai::types::{
 use poise::serenity_prelude as serenity;
 use rand::Rng;
 use std::sync::atomic::{AtomicU64, Ordering};
-use tracing::info;
+use tracing::{error, info};
 
 static LAST_RESPONSE: AtomicU64 = AtomicU64::new(0);
 
@@ -93,39 +93,63 @@ pub async fn generate_response(
             }
         }
 
+        // OpenAI is very strict about the name, we need to make sure it matches ^[a-zA-Z0-9_-]+$
+        // Remove any special characters, and replace spaces with underscores
+        let username = msg
+            .author
+            .name
+            .replace(' ', "_")
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+            .collect::<String>();
+
+        // Not sure what is causing this, log the changes so we might know more
+        if username != msg.author.name {
+            info!("Changed username from {} to {}", msg.author.name, username);
+        }
+
         chat_messages.push(
             ChatCompletionRequestUserMessageArgs::default()
                 .content(user_content)
-                .name(format!("{}__{}", msg.author.name.as_str(), msg.author.id))
+                .name(format!("{}__{}", username, msg.author.id))
                 .build()
                 .unwrap()
                 .into(),
         );
     }
 
-    let client = framework.user_data.openai_client.as_ref().unwrap();
+    let openai_tasks = async {
+        let client = framework.user_data.openai_client.as_ref().unwrap();
 
-    let request = CreateChatCompletionRequestArgs::default()
-        .model(framework.user_data.config.openai.auto.model.as_str())
-        .messages(chat_messages)
-        .max_tokens(framework.user_data.config.openai.auto.max_tokens)
-        .build()?;
+        let request = CreateChatCompletionRequestArgs::default()
+            .model(framework.user_data.config.openai.auto.model.as_str())
+            .messages(chat_messages.clone())
+            .max_tokens(framework.user_data.config.openai.auto.max_tokens)
+            .build()?;
 
-    let resp = client.chat().create(request).await?;
+        let resp = client.chat().create(request).await?;
 
-    // Send the response
-    message
-        .reply(
-            ctx,
-            resp.choices
-                .first()
-                .unwrap()
-                .message
-                .content
-                .as_ref()
-                .unwrap(),
-        )
-        .await?;
+        // Send the response
+        message
+            .reply(
+                ctx,
+                resp.choices
+                    .first()
+                    .unwrap()
+                    .message
+                    .content
+                    .as_ref()
+                    .unwrap(),
+            )
+            .await?;
+        Ok::<(), Error>(())
+    };
+
+    if let Err(e) = openai_tasks.await {
+        error!("Error generating response: {:?}", e);
+        info!("Request: {:?}", chat_messages);
+    }
+
     Ok(())
 }
 
