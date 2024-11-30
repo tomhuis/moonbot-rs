@@ -5,7 +5,7 @@ use songbird::SerenityInit;
 use sunbot_config::{self, config::SunbotConfig};
 use sunbot_db::{get_db, init_db};
 use tracing::{info, warn, Level};
-use tracing_subscriber::FmtSubscriber;
+use tracing_subscriber::{filter, prelude::*};
 
 mod commands;
 mod handlers;
@@ -110,12 +110,13 @@ async fn bot_entrypoint() {
             prefix: Some("~".into()),
             execute_self_messages: false,
             execute_untracked_edits: true,
-            mention_as_prefix: true,
+            mention_as_prefix: false,
             ..Default::default()
         },
         event_handler: |ctx, event, framework, data| {
             Box::pin(handlers::handler(ctx, event, framework, data))
         },
+        on_error: |error| Box::pin(handlers::error_handler(error)),
         ..Default::default()
     };
 
@@ -135,12 +136,6 @@ async fn bot_entrypoint() {
 }
 
 fn main() {
-    // Configue Logging
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
-        .finish();
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
-
     let config = sunbot_config::load_config();
 
     if config.discord.token.is_empty() {
@@ -158,6 +153,16 @@ fn main() {
             ..Default::default()
         },
     ));
+
+    // Configure logging with Sentry
+    let stdout_log = tracing_subscriber::fmt::layer()
+        .compact()
+        .with_filter(filter::LevelFilter::from(Level::INFO));
+
+    tracing_subscriber::registry()
+        .with(stdout_log)
+        .with(sentry_tracing::layer())
+        .init();
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()

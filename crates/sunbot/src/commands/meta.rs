@@ -48,6 +48,7 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
             format!("{:.2} MB", (process.memory() / 1024 / 1024)),
             false,
         )
+        .field("Source", "https://github.com/AaronFoley/sunbot-rs/", false)
         .field("Author", "<@116586345115287558>", false);
 
     let reply = poise::CreateReply::default().embed(embed);

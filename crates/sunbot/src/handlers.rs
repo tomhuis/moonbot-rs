@@ -1,7 +1,10 @@
 use crate::{Data, Error};
+use poise::builtins::on_error as poise_on_error;
 use poise::serenity_prelude as serenity;
+use poise::FrameworkError;
 use sea_orm::*;
 use sunbot_db::entities::prelude::*;
+
 use tracing::info;
 
 mod dad;
@@ -35,4 +38,12 @@ pub async fn handler(
     }
 
     Ok(())
+}
+
+pub async fn error_handler<U, E: std::fmt::Display + std::fmt::Debug>(
+    error: FrameworkError<'_, U, E>,
+) {
+    if let Err(e) = poise_on_error(error).await {
+        tracing::error!("Error while handling error: {}", e);
+    }
 }

@@ -118,6 +118,9 @@ pub struct OpenAIAuto {
     pub max_tokens: u32,
     // The maximum number of messages to collect as context
     pub max_messages: u8,
+    // The maximum age of message in seconds in relation to the current message
+    // to consider it as context
+    pub max_message_age: i64,
     // Configuration for the random responses
     pub random: OpenAIAutoRandom,
 }
@@ -130,6 +133,7 @@ impl Default for OpenAIAuto {
             use_vision: true,
             max_tokens: 100,
             max_messages: 30,
+            max_message_age: 86400,
             random: OpenAIAutoRandom::default(),
         }
     }

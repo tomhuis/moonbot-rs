@@ -3984,7 +3984,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sunbot"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "async-openai",
  "base64 0.22.1",
@@ -3998,6 +3998,7 @@ dependencies = [
  "regex",
  "sea-orm",
  "sentry",
+ "sentry-tracing",
  "serde_json",
  "serenity",
  "songbird",
@@ -4011,7 +4012,7 @@ dependencies = [
 
 [[package]]
 name = "sunbot_config"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "once_cell",
  "serde",
@@ -4021,7 +4022,7 @@ dependencies = [
 
 [[package]]
 name = "sunbot_db"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "sea-orm",
  "sunbot_migrations",
@@ -4030,7 +4031,7 @@ dependencies = [
 
 [[package]]
 name = "sunbot_migrations"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "async-std",
  "sea-orm-migration",
@@ -4430,9 +4431,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-subscriber"
-version = "0.3.18"
+version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad0f048c97dbd9faa9b7df56362b8ebcaa52adb06b498c050d2f4e32f90a7a8b"
+checksum = "e8189decb5ac0fa7bc8b96b7cb9b2701d60d48805aca84a238004d665fcc4008"
 dependencies = [
  "matchers",
  "nu-ansi-term",

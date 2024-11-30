@@ -43,7 +43,13 @@ pub async fn generate_response(
         );
     }
 
-    for msg in messages.iter() {
+    for msg in messages.iter().rev() {
+        // If this message is too old ignore it
+        let diff = message.timestamp.timestamp() - msg.timestamp.timestamp();
+        if diff > framework.user_data.config.openai.auto.max_message_age {
+            continue;
+        }
+
         // If this is sent by us use ChatCompletionRequestAssistantMessage
         if msg.author.id == framework.bot_id {
             chat_messages.push(
@@ -54,6 +60,10 @@ pub async fn generate_response(
                     .unwrap()
                     .into(),
             );
+            continue;
+        }
+        // Otherwise ignore messages from other bots
+        else if msg.author.bot {
             continue;
         }
 
