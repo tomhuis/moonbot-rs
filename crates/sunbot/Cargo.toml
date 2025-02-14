@@ -1,6 +1,6 @@
 [package]
 name = "sunbot"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 build = "build.rs"
 
@@ -28,4 +28,4 @@ sea-orm.workspace = true
 base64.workspace = true
 
 [build-dependencies]
-built = {version = "0.7", features = ["cargo-lock", "chrono", "dependency-tree"]}
+built = {version = "0.7.6", features = ["cargo-lock", "chrono", "dependency-tree"]}

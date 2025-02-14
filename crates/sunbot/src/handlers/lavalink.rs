@@ -19,14 +19,16 @@ pub async fn ready_event(client: LavalinkClient, session_id: String, event: &eve
 
 #[hook]
 pub async fn track_start(client: LavalinkClient, _session_id: String, event: &events::TrackStart) {
-    let player_context = client.get_player_context(event.guild_id).unwrap();
-    let data = player_context
+    let player = client.get_player_context(event.guild_id).unwrap();
+    let data = player
         .data::<(serenity::ChannelId, std::sync::Arc<serenity::Http>)>()
         .unwrap();
     let (channel_id, http) = (&data.0, &data.1);
 
-    // If the queue is empty, we don't want to send a message
-    if player_context.get_queue().get_count().await.unwrap_or(0) == 0 {
+    // If the queue is empty and nothing is playing, we don't want to send a message
+    if player.get_queue().get_count().await.unwrap_or(0) == 0
+        && player.get_player().await.unwrap().track.is_none()
+    {
         return;
     }
 

@@ -26,7 +26,7 @@ pub async fn handle_message(
             if name.as_str().len() > 32 {
                 return Ok(());
             }
-            if rand::thread_rng().gen::<f64>() < 0.8 {
+            if rand::rng().random::<f64>() < 0.8 {
                 let bot_user = framework.bot_id.to_user(&ctx.http).await?;
                 message
                     .reply_ping(

@@ -102,7 +102,7 @@ pub async fn play(
         }
     };
 
-    let has_joined = _join(&ctx, guild_id, None).await?;
+    _join(&ctx, guild_id, None).await?;
     let Some(player) = lava_client.get_player_context(guild_id) else {
         return Ok(());
     };
@@ -122,18 +122,45 @@ pub async fn play(
             playlist_info = Some(x.info);
             x.tracks.iter().map(|x| x.clone().into()).collect()
         }
+        Some(TrackLoadData::Error(x)) => {
+            send_err_msg(ctx, "Error", x.message.as_str()).await;
+            return Ok(());
+        }
         _ => {
             ctx.say(format!("{:?}", loaded_tracks)).await?;
             return Ok(());
         }
     };
 
+    let queue = player.get_queue();
     let mut duration = 0;
-    let position = player.get_queue().get_count().await.unwrap_or(1);
+    let position = queue.get_count().await.unwrap_or(0) + 1;
 
     for i in &mut tracks {
         i.track.user_data = Some(serde_json::json!({"requester_id": ctx.author().id.get()}));
         duration += i.track.info.length;
+    }
+
+    let track = tracks.remove(0).track;
+    // If there is no track playing, just play the first track
+    if player.get_player().await.unwrap().track.is_none() {
+        player.play(&track).await?;
+    }
+
+    // Add the rest of the tracks to the queue
+    queue.append(tracks.clone().into())?;
+
+    // If the queue is empty, reply with a hidden message to the user
+    if queue.get_count().await.unwrap_or(0) == 0 {
+        let resp = ctx
+            .send(
+                poise::CreateReply::default()
+                    .content("Added to queue")
+                    .ephemeral(true),
+            )
+            .await?;
+        resp.delete(ctx).await?;
+        return Ok(());
     }
 
     let mut embed = serenity::CreateEmbed::default().color(0x2ECC71);
@@ -146,14 +173,17 @@ pub async fn play(
             )
             .description(format!("Added playlist {}", info.name))
             .field("Tracks", tracks.len().to_string(), false)
-            .field("Position", format!("#{}", position), true)
+            .field(
+                "Position",
+                format!("#{}-{}", position, 1 + tracks.len()),
+                true,
+            )
             .field(
                 "Duration",
                 format_duration(Duration::from_millis(duration)).to_string(),
                 true,
             )
     } else {
-        let track = &tracks[0].track;
         embed
             .author(
                 serenity::CreateEmbedAuthor::new("Added to queue")
@@ -174,19 +204,6 @@ pub async fn play(
     };
 
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
-
-    let queue = player.get_queue();
-    queue.append(tracks.into())?;
-
-    if has_joined {
-        return Ok(());
-    }
-
-    if let Ok(player_data) = player.get_player().await {
-        if player_data.track.is_none() && queue.get_track(0).await.is_ok_and(|x| x.is_some()) {
-            player.skip()?;
-        }
-    }
 
     Ok(())
 }
@@ -326,9 +343,13 @@ pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
         send_err_msg(ctx, "Error", "Join the bot to a voice channel first.").await;
         return Ok(());
     };
+
     player.skip()?;
 
-    if player.get_queue().get_count().await? == 0 {
+    // If queue is empty and nothing is playing, send a different message
+    if player.get_queue().get_count().await? == 0
+        && player.get_player().await.unwrap().track.is_none()
+    {
         let embed = serenity::CreateEmbed::new()
             .author(
                 serenity::CreateEmbedAuthor::new("Skipped")

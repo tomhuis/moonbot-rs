@@ -201,9 +201,7 @@ pub async fn handle_random_message(
     }
 
     // Roll the dice
-    if rand::thread_rng().gen::<f64>()
-        < framework.user_data.config.openai.auto.random.trigger_chance
-    {
+    if rand::rng().random::<f64>() < framework.user_data.config.openai.auto.random.trigger_chance {
         info!(
             "Trigggered Random Reply on random message: {}",
             message.content
