@@ -6,6 +6,7 @@ use tokio::sync::OnceCell;
 static DB_CLIENT: OnceCell<DatabaseConnection> = OnceCell::const_new();
 
 pub mod entities;
+pub mod services;
 
 pub async fn init_db(database_url: &str) {
     let opt = ConnectOptions::new(database_url);

@@ -9,6 +9,7 @@ use poise::serenity_prelude as serenity;
 use rand::Rng;
 use std::sync::atomic::{AtomicU64, Ordering};
 use tracing::{error, info};
+use sunbot_db::services::user_service::UserService;
 
 static LAST_RESPONSE: AtomicU64 = AtomicU64::new(0);
 
@@ -18,6 +19,21 @@ pub async fn generate_response(
     framework: poise::FrameworkContext<'_, Data, Error>,
     message: &serenity::Message,
 ) -> Result<(), Error> {
+    // Get or create user relationship data
+    let user_id = message.author.id.get() as i64;
+    let username = message.author.name.clone();
+    let display_name = message.author.global_name.clone();
+    
+    let user = UserService::get_or_create_user(
+        framework.user_data.db,
+        user_id,
+        username,
+        display_name,
+    ).await?;
+
+    // Analyze message for sentiment and keywords
+    let (temperature_delta, new_keywords) = UserService::analyze_message_content(&message.content);
+
     // Gather some context
     let mut messages = ctx
         .http
@@ -37,6 +53,18 @@ pub async fn generate_response(
         chat_messages.push(
             ChatCompletionRequestSystemMessageArgs::default()
                 .content(ctx.as_str())
+                .build()
+                .unwrap()
+                .into(),
+        );
+    }
+
+    // Add user relationship context to system messages
+    let user_context = user.get_relationship_context();
+    if !user_context.is_empty() {
+        chat_messages.push(
+            ChatCompletionRequestSystemMessageArgs::default()
+                .content(format!("User relationship context for {}: {}", user.username, user_context))
                 .build()
                 .unwrap()
                 .into(),
@@ -145,7 +173,20 @@ pub async fn generate_response(
         Ok::<(), Error>(())
     };
 
-    if let Err(e) = openai_tasks.await {
+    let result = openai_tasks.await;
+    
+    // Update user relationship state after interaction
+    if let Err(e) = UserService::update_user_interaction(
+        framework.user_data.db,
+        user_id,
+        temperature_delta,
+        new_keywords,
+        None, // Could add notes based on interaction outcome in the future
+    ).await {
+        error!("Failed to update user relationship state: {:?}", e);
+    }
+
+    if let Err(e) = result {
         error!("Error generating response: {:?}", e);
         info!("Request: {:?}", chat_messages);
     }
