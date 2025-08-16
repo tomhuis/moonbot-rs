@@ -11,3 +11,14 @@ url = "sqlite+aiosqlite:///example.db"
 
 [openai]
 api_key = "apikeygoeshere"
+
+# User relationship tracking configuration
+[openai.auto.relationship_tracking]
+# Enable/disable user relationship tracking
+enabled = true
+# Maximum number of keywords to store per user (default: 20)
+max_keywords_per_user = 20
+# How much to adjust temperature per positive/negative sentiment (default: 0.1)
+temperature_adjustment = 0.1
+# Whether to include relationship context in AI prompts (default: true)
+include_context_in_prompts = true

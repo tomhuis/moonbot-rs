@@ -123,6 +123,8 @@ pub struct OpenAIAuto {
     pub max_message_age: i64,
     // Configuration for the random responses
     pub random: OpenAIAutoRandom,
+    // Configuration for user relationship tracking
+    pub relationship_tracking: RelationshipTrackingConfig,
 }
 
 impl Default for OpenAIAuto {
@@ -135,6 +137,7 @@ impl Default for OpenAIAuto {
             max_messages: 30,
             max_message_age: 86400,
             random: OpenAIAutoRandom::default(),
+            relationship_tracking: RelationshipTrackingConfig::default(),
         }
     }
 }
@@ -164,4 +167,28 @@ impl Default for OpenAIAutoRandom {
 #[serde(default)]
 pub struct SentryConfig {
     pub dsn: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(default)]
+pub struct RelationshipTrackingConfig {
+    // Whether to enable user relationship tracking
+    pub enabled: bool,
+    // Maximum number of keywords to store per user
+    pub max_keywords_per_user: usize,
+    // How much to adjust temperature per positive/negative sentiment detection
+    pub temperature_adjustment: f32,
+    // Whether to include relationship context in AI prompts
+    pub include_context_in_prompts: bool,
+}
+
+impl Default for RelationshipTrackingConfig {
+    fn default() -> Self {
+        RelationshipTrackingConfig {
+            enabled: true,
+            max_keywords_per_user: 20,
+            temperature_adjustment: 0.1,
+            include_context_in_prompts: true,
+        }
+    }
 }

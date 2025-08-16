@@ -38,13 +38,14 @@ impl UserService {
         temperature_delta: Option<f32>,
         new_keywords: Option<Vec<String>>,
         notes: Option<String>,
+        max_keywords: usize,
     ) -> Result<UserModel, DbErr> {
         let user = User::find_by_id(user_id)
             .one(db)
             .await?
             .ok_or(DbErr::RecordNotFound("User not found".to_string()))?;
 
-        let updated_user = user.update_interaction(temperature_delta, new_keywords, notes);
+        let updated_user = user.update_interaction(temperature_delta, new_keywords, notes, max_keywords);
         Ok(updated_user.update(db).await?)
     }
 
@@ -61,7 +62,7 @@ impl UserService {
     }
 
     /// Analyze message content and extract potential keywords/sentiment
-    pub fn analyze_message_content(content: &str) -> (Option<f32>, Option<Vec<String>>) {
+    pub fn analyze_message_content(content: &str, temperature_adjustment: f32) -> (Option<f32>, Option<Vec<String>>) {
         let content_lower = content.to_lowercase();
         
         // Simple sentiment analysis based on common words
@@ -92,9 +93,9 @@ impl UserService {
             }
         }
 
-        // Calculate temperature delta
+        // Calculate temperature delta using configurable adjustment
         let temperature_delta = if positive_count > 0 || negative_count > 0 {
-            let delta = (positive_count as f32 - negative_count as f32) * 0.1;
+            let delta = (positive_count as f32 - negative_count as f32) * temperature_adjustment;
             Some(delta.clamp(-0.5, 0.5))
         } else {
             None

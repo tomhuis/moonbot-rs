@@ -49,7 +49,8 @@ impl Model {
         &self, 
         temperature_delta: Option<f32>, 
         new_keywords: Option<Vec<String>>,
-        notes: Option<String>
+        notes: Option<String>,
+        max_keywords: usize,
     ) -> ActiveModel {
         let mut keywords: Keywords = match serde_json::from_value(self.keywords.clone()) {
             Ok(k) => k,
@@ -62,10 +63,10 @@ impl Model {
                     keywords.push(keyword);
                 }
             }
-            // Keep only the last 20 keywords to avoid unbounded growth
-            if keywords.len() > 20 {
+            // Keep only the last N keywords to avoid unbounded growth
+            if keywords.len() > max_keywords {
                 let keywords_len = keywords.len();
-                keywords = keywords.into_iter().skip(keywords_len - 20).collect();
+                keywords = keywords.into_iter().skip(keywords_len - max_keywords).collect();
             }
         }
 

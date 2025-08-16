@@ -19,6 +19,14 @@ pub async fn generate_response(
     framework: poise::FrameworkContext<'_, Data, Error>,
     message: &serenity::Message,
 ) -> Result<(), Error> {
+    let config = &framework.user_data.config.openai.auto.relationship_tracking;
+    
+    // Check if relationship tracking is enabled
+    if !config.enabled {
+        // Fall back to original behavior without relationship tracking
+        return generate_response_without_tracking(ctx, framework, message).await;
+    }
+
     // Get or create user relationship data
     let user_id = message.author.id.get() as i64;
     let username = message.author.name.clone();
@@ -32,7 +40,7 @@ pub async fn generate_response(
     ).await?;
 
     // Analyze message for sentiment and keywords
-    let (temperature_delta, new_keywords) = UserService::analyze_message_content(&message.content);
+    let (temperature_delta, new_keywords) = UserService::analyze_message_content(&message.content, config.temperature_adjustment);
 
     // Gather some context
     let mut messages = ctx
@@ -59,12 +67,171 @@ pub async fn generate_response(
         );
     }
 
-    // Add user relationship context to system messages
-    let user_context = user.get_relationship_context();
-    if !user_context.is_empty() {
+    // Add user relationship context to system messages if enabled
+    if config.include_context_in_prompts {
+        let user_context = user.get_relationship_context();
+        if !user_context.is_empty() {
+            chat_messages.push(
+                ChatCompletionRequestSystemMessageArgs::default()
+                    .content(format!("User relationship context for {}: {}", user.username, user_context))
+                    .build()
+                    .unwrap()
+                    .into(),
+            );
+        }
+    }
+
+    for msg in messages.iter().rev() {
+        // If this message is too old ignore it
+        let diff = message.timestamp.timestamp() - msg.timestamp.timestamp();
+        if diff > framework.user_data.config.openai.auto.max_message_age {
+            continue;
+        }
+
+        // If this is sent by us use ChatCompletionRequestAssistantMessage
+        if msg.author.id == framework.bot_id {
+            chat_messages.push(
+                ChatCompletionRequestAssistantMessageArgs::default()
+                    .content(msg.content.as_str())
+                    .name(msg.author.name.as_str())
+                    .build()
+                    .unwrap()
+                    .into(),
+            );
+            continue;
+        }
+        // Otherwise ignore messages from other bots
+        else if msg.author.bot {
+            continue;
+        }
+
+        // Otherwise, this is a user message
+        let mut user_content: Vec<ChatCompletionRequestUserMessageContentPart> =
+            vec![ChatCompletionRequestMessageContentPartTextArgs::default()
+                .text(msg.content.as_str())
+                .build()
+                .unwrap()
+                .into()];
+
+        // If we have use_vision enabled
+        if framework.user_data.config.openai.auto.use_vision {
+            for attachment in msg.attachments.iter() {
+                if let Some(content_type) = attachment.content_type.as_deref() {
+                    if content_type.to_lowercase().starts_with("image") {
+                        info!("Found image attachment: {}", attachment.url.as_str());
+                        user_content.push(
+                            ChatCompletionRequestMessageContentPartImageArgs::default()
+                                .image_url(attachment.url.as_str())
+                                .build()
+                                .unwrap()
+                                .into(),
+                        );
+                    }
+                }
+            }
+        }
+
+        // OpenAI is very strict about the name, we need to make sure it matches ^[a-zA-Z0-9_-]+$
+        // Remove any special characters, and replace spaces with underscores
+        let username = msg
+            .author
+            .name
+            .replace(' ', "_")
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+            .collect::<String>();
+
+        // Not sure what is causing this, log the changes so we might know more
+        if username != msg.author.name {
+            info!("Changed username from {} to {}", msg.author.name, username);
+        }
+
+        chat_messages.push(
+            ChatCompletionRequestUserMessageArgs::default()
+                .content(user_content)
+                .name(format!("{}__{}", username, msg.author.id))
+                .build()
+                .unwrap()
+                .into(),
+        );
+    }
+
+    let openai_tasks = async {
+        let client = framework.user_data.openai_client.as_ref().unwrap();
+
+        let request = CreateChatCompletionRequestArgs::default()
+            .model(framework.user_data.config.openai.auto.model.as_str())
+            .messages(chat_messages.clone())
+            .max_tokens(framework.user_data.config.openai.auto.max_tokens)
+            .build()?;
+
+        let resp = client.chat().create(request).await?;
+
+        // Send the response
+        message
+            .reply(
+                ctx,
+                resp.choices
+                    .first()
+                    .unwrap()
+                    .message
+                    .content
+                    .as_ref()
+                    .unwrap(),
+            )
+            .await?;
+        Ok::<(), Error>(())
+    };
+
+    let result = openai_tasks.await;
+    
+    // Update user relationship state after interaction if tracking is enabled
+    if config.enabled {
+        if let Err(e) = UserService::update_user_interaction(
+            framework.user_data.db,
+            user_id,
+            temperature_delta,
+            new_keywords,
+            None, // Could add notes based on interaction outcome in the future
+            config.max_keywords_per_user,
+        ).await {
+            error!("Failed to update user relationship state: {:?}", e);
+        }
+    }
+
+    if let Err(e) = result {
+        error!("Error generating response: {:?}", e);
+        info!("Request: {:?}", chat_messages);
+    }
+
+    Ok(())
+}
+
+// Generate a response without relationship tracking (fallback)
+async fn generate_response_without_tracking(
+    ctx: &serenity::Context,
+    framework: poise::FrameworkContext<'_, Data, Error>,
+    message: &serenity::Message,
+) -> Result<(), Error> {
+    // Gather some context
+    let mut messages = ctx
+        .http
+        .get_messages(
+            message.channel_id,
+            Some(serenity::MessagePagination::Before(message.id)),
+            Some(framework.user_data.config.openai.auto.max_messages),
+        )
+        .await?;
+
+    messages.insert(0, message.clone());
+
+    let mut chat_messages: Vec<async_openai::types::ChatCompletionRequestMessage> = vec![];
+
+    // Include system context
+    for ctx in framework.user_data.config.openai.auto.system_context.iter() {
         chat_messages.push(
             ChatCompletionRequestSystemMessageArgs::default()
-                .content(format!("User relationship context for {}: {}", user.username, user_context))
+                .content(ctx.as_str())
                 .build()
                 .unwrap()
                 .into(),
@@ -173,20 +340,7 @@ pub async fn generate_response(
         Ok::<(), Error>(())
     };
 
-    let result = openai_tasks.await;
-    
-    // Update user relationship state after interaction
-    if let Err(e) = UserService::update_user_interaction(
-        framework.user_data.db,
-        user_id,
-        temperature_delta,
-        new_keywords,
-        None, // Could add notes based on interaction outcome in the future
-    ).await {
-        error!("Failed to update user relationship state: {:?}", e);
-    }
-
-    if let Err(e) = result {
+    if let Err(e) = openai_tasks.await {
         error!("Error generating response: {:?}", e);
         info!("Request: {:?}", chat_messages);
     }
