@@ -1,12 +1,12 @@
 [package]
-name = "sunbot"
+name = "moonbot"
 version = "0.3.3"
 edition = "2021"
 build = "build.rs"
 
 [dependencies]
-sunbot_config = { path = "../sunbot_config" }
-sunbot_db = { path = "../sunbot_db" }
+moonbot_config = { path = "../sunbot_config" }
+moonbot_db = { path = "../sunbot_db" }
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tokio.workspace = true

@@ -3,3 +3,9 @@ config.toml
 .scratch
 .env
 db.sqlite
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+# Windows debug symbols (outside target just in case)
+*.pdb

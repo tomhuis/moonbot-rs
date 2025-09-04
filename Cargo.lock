@@ -601,8 +601,10 @@ checksum = "7e36cc9d416881d2e24f9a963be5fb1cd90966419ac844274161d10488b3e825"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-targets 0.52.6",
 ]
 
@@ -2194,6 +2196,63 @@ dependencies = [
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "moonbot"
+version = "0.3.3"
+dependencies = [
+ "async-openai",
+ "base64 0.22.1",
+ "built",
+ "futures",
+ "humantime",
+ "lavalink-rs",
+ "lazy_static",
+ "moonbot_config",
+ "moonbot_db",
+ "poise",
+ "rand 0.9.0",
+ "regex",
+ "sea-orm",
+ "sentry",
+ "sentry-tracing",
+ "serde_json",
+ "serenity",
+ "songbird",
+ "sysinfo",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "moonbot_config"
+version = "0.3.2"
+dependencies = [
+ "once_cell",
+ "serde",
+ "toml",
+ "tracing",
+]
+
+[[package]]
+name = "moonbot_db"
+version = "0.3.2"
+dependencies = [
+ "chrono",
+ "moonbot_migrations",
+ "sea-orm",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "moonbot_migrations"
+version = "0.3.2"
+dependencies = [
+ "async-std",
+ "sea-orm-migration",
 ]
 
 [[package]]
@@ -4175,61 +4234,6 @@ name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
-
-[[package]]
-name = "sunbot"
-version = "0.3.3"
-dependencies = [
- "async-openai",
- "base64 0.22.1",
- "built",
- "futures",
- "humantime",
- "lavalink-rs",
- "lazy_static",
- "poise",
- "rand 0.9.0",
- "regex",
- "sea-orm",
- "sentry",
- "sentry-tracing",
- "serde_json",
- "serenity",
- "songbird",
- "sunbot_config",
- "sunbot_db",
- "sysinfo",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "sunbot_config"
-version = "0.3.2"
-dependencies = [
- "once_cell",
- "serde",
- "toml",
- "tracing",
-]
-
-[[package]]
-name = "sunbot_db"
-version = "0.3.2"
-dependencies = [
- "sea-orm",
- "sunbot_migrations",
- "tokio",
-]
-
-[[package]]
-name = "sunbot_migrations"
-version = "0.3.2"
-dependencies = [
- "async-std",
- "sea-orm-migration",
-]
 
 [[package]]
 name = "syn"

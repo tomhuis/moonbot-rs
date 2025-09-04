@@ -56,17 +56,31 @@ impl Default for DatabaseConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize)]
 #[serde(default)]
 pub struct OpenAIConfig {
     // The OpenAI API Key
     pub api_key: String,
+    // Optional: Override the API base URL (e.g., http://localhost:11434/v1 for Ollama)
+    pub api_base: String,
     // Configuration for the /askgpt command
     pub askgpt: OpenAIAskgpt,
     // Configuration for the /genimage command
     pub genimage: OpenAIGenImage,
     // Configuration for the automatic replies
     pub auto: OpenAIAuto,
+}
+
+impl Default for OpenAIConfig {
+    fn default() -> Self {
+        OpenAIConfig {
+            api_key: String::from(""),
+            api_base: String::from(""),
+            askgpt: OpenAIAskgpt::default(),
+            genimage: OpenAIGenImage::default(),
+            auto: OpenAIAuto::default(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -153,9 +167,9 @@ impl Default for OpenAIAutoRandom {
             // The minimum length of the message to trigger a random response
             min_length: 10,
             // The cooldown in seconds between random responses
-            cooldown: 600,
+            cooldown: 1800,
             // The chance of triggering a random response
-            trigger_chance: 0.2,
+            trigger_chance: 0.05,
         }
     }
 }

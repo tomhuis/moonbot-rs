@@ -3,3 +3,5 @@
 pub mod prelude;
 
 pub mod guild;
+pub mod channel_prompt;
+pub mod global_prompt;

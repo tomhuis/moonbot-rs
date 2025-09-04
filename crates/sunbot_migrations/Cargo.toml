@@ -1,11 +1,11 @@
 [package]
-name = "sunbot_migrations"
+name = "moonbot_migrations"
 version = "0.3.2"
 edition = "2021"
 publish = false
 
 [lib]
-name = "sunbot_migrations"
+name = "moonbot_migrations"
 path = "src/lib.rs"
 
 [dependencies]

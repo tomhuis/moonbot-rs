@@ -3,7 +3,7 @@ use poise::builtins::on_error as poise_on_error;
 use poise::serenity_prelude as serenity;
 use poise::FrameworkError;
 use sea_orm::*;
-use sunbot_db::entities::prelude::*;
+use moonbot_db::entities::prelude::*;
 
 use tracing::info;
 
@@ -25,7 +25,7 @@ pub async fn handler(
         }
         serenity::FullEvent::GuildCreate { guild, .. } => {
             info!("Joined Guild {}: {}", guild.id, guild.name);
-            let guild = sunbot_db::entities::guild::ActiveModel {
+            let guild = moonbot_db::entities::guild::ActiveModel {
                 id: ActiveValue::Set(guild.id.get() as i64),
                 ..Default::default()
             };

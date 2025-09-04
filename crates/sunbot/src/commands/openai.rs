@@ -143,3 +143,67 @@ pub async fn genimage(
         .await?;
     Ok(())
 }
+
+/// Show the current global system_context (DB override or config fallback)
+#[poise::command(slash_command)]
+pub async fn prompt_show(ctx: Context<'_>) -> Result<(), Error> {
+    let db = ctx.data().db;
+    let sys_ctx = if let Some(db_ctx) = moonbot_db::get_global_system_context(db).await {
+        db_ctx
+    } else {
+        ctx.data().config.openai.auto.system_context.clone()
+    };
+    if sys_ctx.is_empty() {
+        ctx.say("No global system_context set.").await?;
+    } else {
+        let joined = sys_ctx
+            .iter()
+            .enumerate()
+            .map(|(i, s)| format!("{}: {}", i + 1, s))
+            .collect::<Vec<_>>()
+            .join("\n");
+        ctx.say(format!("Current global system_context ({} lines):\n{}", sys_ctx.len(), joined))
+            .await?;
+    }
+    Ok(())
+}
+
+/// Replace the global system_context with one or more lines (separate by \n)
+#[poise::command(slash_command)]
+pub async fn prompt_set(
+    ctx: Context<'_>,
+    #[description = "New system context; use new lines to separate multiple lines"] content: String,
+) -> Result<(), Error> {
+    let lines: Vec<String> = content.lines().map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
+    if let Err(e) = moonbot_db::set_global_system_context(ctx.data().db, lines).await {
+        ctx.say(format!("Failed to set global prompt: {}", e)).await?;
+    } else {
+        ctx.say("Updated global system_context.").await?;
+    }
+    Ok(())
+}
+
+/// Append a single line to the global system_context
+#[poise::command(slash_command)]
+pub async fn prompt_add(
+    ctx: Context<'_>,
+    #[description = "Line to append to system_context"] line: String,
+) -> Result<(), Error> {
+    if let Err(e) = moonbot_db::add_global_system_context_line(ctx.data().db, line).await {
+        ctx.say(format!("Failed to add line: {}", e)).await?;
+    } else {
+        ctx.say("Appended line to global system_context.").await?;
+    }
+    Ok(())
+}
+
+/// Clear the global system_context (reverts to config fallback)
+#[poise::command(slash_command)]
+pub async fn prompt_clear(ctx: Context<'_>) -> Result<(), Error> {
+    if let Err(e) = moonbot_db::clear_global_system_context(ctx.data().db).await {
+        ctx.say(format!("Failed to clear: {}", e)).await?;
+    } else {
+        ctx.say("Cleared global system_context.").await?;
+    }
+    Ok(())
+}
