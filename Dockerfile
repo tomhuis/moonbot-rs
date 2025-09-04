@@ -31,7 +31,7 @@ RUN rm -rf crates/**/*.rs
 COPY ./crates ./crates
 
 # build for release
-RUN rm -rf ./target/release/deps/sunbot* ./target/release/.fingerprint/sunbot*
+RUN rm -rf ./target/release/deps/moonbot* ./target/release/.fingerprint/moonbot*
 RUN cargo build --release
 
 FROM debian:bookworm-slim
@@ -45,7 +45,7 @@ RUN apt-get update \
     && apt-get autoremove --purge -y $(cat /tmp/cleanup-packages.txt) \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apk/
 
-COPY --from=builder /sunbot/target/release/sunbot /sunbot
+COPY --from=builder /sunbot/target/release/moonbot /sunbot
 
 # Setup local app user
 RUN groupadd -g 442 app && \
@@ -53,4 +53,4 @@ RUN groupadd -g 442 app && \
     chown -R app:app /sunbot
 
 USER app
-CMD ["./sunbot"]
+CMD ["./moonbot"]

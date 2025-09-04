@@ -1,11 +1,11 @@
 [package]
-name = "sunbot_config"
+name = "moonbot_config"
 version = "0.3.2"
 edition = "2021"
 publish = false
 
 [lib]
-name = "sunbot_config"
+name = "moonbot_config"
 path = "src/lib.rs"
 
 [dependencies]

@@ -2,8 +2,8 @@ use lavalink_rs::{model::events, prelude::*};
 use poise::serenity_prelude as serenity;
 use sea_orm::DatabaseConnection;
 use songbird::SerenityInit;
-use sunbot_config::{self, config::SunbotConfig};
-use sunbot_db::{get_db, init_db};
+use moonbot_config::{self, config::SunbotConfig};
+use moonbot_db::{get_db, init_db};
 use tracing::{info, warn, Level};
 use tracing_subscriber::{filter, prelude::*};
 
@@ -32,16 +32,21 @@ async fn on_ready(
     _framework: &poise::Framework<Data, Error>,
 ) -> Result<Data, Error> {
     info!("Logged in as {}", ready.user.name);
-    let config: &SunbotConfig = sunbot_config::get_config();
+    let config: &SunbotConfig = moonbot_config::get_config();
 
     // Initialize the database
     init_db(&config.database.url).await;
 
     // Configure OpenAI
-    let openai_client = if !config.openai.api_key.is_empty() {
-        Some(async_openai::Client::with_config(
-            async_openai::config::OpenAIConfig::new().with_api_key(config.openai.api_key.as_str()),
-        ))
+    let openai_client = if !config.openai.api_key.is_empty() || !config.openai.api_base.is_empty() {
+        let mut cfg = async_openai::config::OpenAIConfig::new();
+        if !config.openai.api_key.is_empty() {
+            cfg = cfg.with_api_key(config.openai.api_key.as_str());
+        }
+        if !config.openai.api_base.is_empty() {
+            cfg = cfg.with_api_base(config.openai.api_base.as_str());
+        }
+        Some(async_openai::Client::with_config(cfg))
     } else {
         None
     };
@@ -87,7 +92,7 @@ async fn on_ready(
 }
 
 async fn bot_entrypoint() {
-    let config = sunbot_config::get_config();
+    let config = moonbot_config::get_config();
 
     let commands = vec![
         commands::register::register_commands(),
@@ -95,6 +100,10 @@ async fn bot_entrypoint() {
         commands::meta::about(),
         commands::openai::askgpt(),
         commands::openai::genimage(),
+    commands::openai::prompt_show(),
+    commands::openai::prompt_set(),
+    commands::openai::prompt_add(),
+    commands::openai::prompt_clear(),
         commands::music::join(),
         commands::music::leave(),
         commands::music::play(),
@@ -136,7 +145,7 @@ async fn bot_entrypoint() {
 }
 
 fn main() {
-    let config = sunbot_config::load_config();
+    let config = moonbot_config::load_config();
 
     if config.discord.token.is_empty() {
         panic!("Discord token is not set in the configuration file");

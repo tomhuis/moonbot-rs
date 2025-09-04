@@ -8,7 +8,10 @@ static GLOBAL_CONFIG: OnceLock<SunbotConfig> = OnceLock::new();
 pub mod config;
 
 pub fn load_config() -> &'static SunbotConfig {
-    let cfg_path = std::env::var("SUNBOT_CONFIG_FILE").unwrap_or(String::from("config.toml"));
+    // Prefer new env var, fallback to old for compatibility, finally to config.toml
+    let cfg_path = std::env::var("MOONBOT_CONFIG_FILE")
+        .or_else(|_| std::env::var("SUNBOT_CONFIG_FILE"))
+        .unwrap_or(String::from("config.toml"));
     info!("Loading configuration from: {}", cfg_path);
 
     let cfg_str = fs::read_to_string(cfg_path.as_str())

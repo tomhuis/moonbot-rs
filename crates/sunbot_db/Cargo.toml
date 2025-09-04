@@ -1,14 +1,16 @@
 [package]
-name = "sunbot_db"
+name = "moonbot_db"
 version = "0.3.2"
 edition = "2021"
 publish = false
 
 [lib]
-name = "sunbot_db"
+name = "moonbot_db"
 path = "src/lib.rs"
 
 [dependencies]
-sunbot_migrations = { path = "../sunbot_migrations" }
+moonbot_migrations = { path = "../sunbot_migrations" }
 tokio.workspace = true
 sea-orm.workspace = true
+serde_json.workspace = true
+chrono.workspace = true

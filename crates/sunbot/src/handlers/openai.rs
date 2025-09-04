@@ -32,11 +32,42 @@ pub async fn generate_response(
 
     let mut chat_messages: Vec<async_openai::types::ChatCompletionRequestMessage> = vec![];
 
-    // Include system context
-    for ctx in framework.user_data.config.openai.auto.system_context.iter() {
+    // Include system context (prefer global override if present)
+    let sys_ctx = if let Some(db_ctx) =
+        moonbot_db::get_global_system_context(framework.user_data.db).await
+    {
+        db_ctx
+    } else {
+        framework
+            .user_data
+            .config
+            .openai
+            .auto
+            .system_context
+            .clone()
+    };
+
+    // Send system context as a single consolidated system message to improve adherence
+    if !sys_ctx.is_empty() {
+        let sys_text = sys_ctx.join("\n");
         chat_messages.push(
             ChatCompletionRequestSystemMessageArgs::default()
-                .content(ctx.as_str())
+                .content(sys_text)
+                .build()
+                .unwrap()
+                .into(),
+        );
+    }
+
+    // If the triggering message calls the bot "Sunbot", add a stronger, safe instruction.
+    if message
+        .content
+        .to_lowercase()
+        .contains("sunbot")
+    {
+        chat_messages.push(
+            ChatCompletionRequestSystemMessageArgs::default()
+                .content("If the user refers to you as 'Sunbot', respond with exactly one curt sentence that corrects the name to 'Moonbot'. Use 2-6 words. No emojis or flourish. Output only that sentence—nothing else. Keep it PG-13, no profanity or slurs, and do not target or insult any person or group.")
                 .build()
                 .unwrap()
                 .into(),
@@ -159,7 +190,7 @@ pub async fn handle_reply(
     framework: poise::FrameworkContext<'_, Data, Error>,
     message: &serenity::Message,
 ) -> Result<(), Error> {
-    if message.author.bot || message.content.is_empty() {
+    if message.content.is_empty() {
         return Ok(());
     }
 
