@@ -11,4 +11,38 @@ url = "sqlite://example.db?mode=rwc"
 
 [openai]
 api_key = "apikeygoeshere"
-api_base = "" # e.g., http://localhost:11434/v1 for Ollama, or http://localhost:8000/v1 for an OpenAI-compatible gateway
+api_base = "" # Optional. Must include /v1 for OpenAI-compatible servers (e.g., http://localhost:11434/v1 for Ollama, http://localhost:8000/v1 for a gateway)
+
+# Optional: Auto-reply and personalization settings
+[openai.auto]
+# Enable hyper-personalization (bot mood + per-user insights)
+personalize = true
+# Model to use for auto replies (OpenAI or OpenAI-compatible)
+model = "gpt-4o"
+# Whether to use vision when available
+use_vision = true
+# Max tokens for auto replies
+max_tokens = 100
+# Context windowing
+max_messages = 30
+max_message_age = 86400
+# Sampling temperature (0.0-2.0)
+temperature = 0.4
+# Frequency penalty (-2.0 to 2.0)
+frequency_penalty = 0.0
+
+[openai.askgpt]
+# Model to use for /askgpt
+model = "gpt-4o"
+# Whether to use vision
+use_vision = true
+# Max tokens for /askgpt responses
+max_tokens = 500
+# Sampling temperature (0.0-2.0)
+temperature = 0.4
+# Frequency penalty (-2.0 to 2.0)
+frequency_penalty = 0.0
+
+[openai.genimage]
+# Model for /genimage
+model = "dall-e-3"

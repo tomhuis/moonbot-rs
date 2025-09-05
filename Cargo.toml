@@ -1,7 +1,12 @@
 [workspace]
-members = ["crates/*"]
+members = [
+	"crates/moonbot",
+	"crates/moonbot_config",
+	"crates/moonbot_db",
+	"crates/moonbot_migrations",
+]
 resolver = "2"
-default-members = ["crates/sunbot"]
+default-members = ["crates/moonbot"]
 
 [workspace.dependencies]
 toml = "0.8.20"

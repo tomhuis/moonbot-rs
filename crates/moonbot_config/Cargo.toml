@@ -1,0 +1,15 @@
+[package]
+name = "moonbot_config"
+version = "0.3.2"
+edition = "2021"
+publish = false
+
+[lib]
+name = "moonbot_config"
+path = "src/lib.rs"
+
+[dependencies]
+toml.workspace = true
+once_cell.workspace = true
+serde.workspace = true
+tracing.workspace = true

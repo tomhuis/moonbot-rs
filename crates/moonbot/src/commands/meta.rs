@@ -4,7 +4,7 @@ use serenity::builder::CreateEmbed;
 use std::time::Duration;
 
 /// Displays the ping/latency of the bot
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "ping")]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     let latency = ctx.ping().await;
     ctx.say(format!("Pong! ({:?})", latency)).await?;
@@ -12,7 +12,7 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Displays information about this bot
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "about")]
 pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
     let user = ctx.framework().bot_id.to_user(&ctx.http()).await?;
 
