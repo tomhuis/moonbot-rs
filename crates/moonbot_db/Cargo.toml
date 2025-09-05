@@ -1,0 +1,17 @@
+[package]
+name = "moonbot_db"
+version = "0.3.2"
+edition = "2021"
+publish = false
+
+[lib]
+name = "moonbot_db"
+path = "src/lib.rs"
+
+[dependencies]
+moonbot_migrations = { path = "../moonbot_migrations" }
+tokio.workspace = true
+sea-orm.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+serde.workspace = true

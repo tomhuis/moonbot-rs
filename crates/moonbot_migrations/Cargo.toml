@@ -1,0 +1,16 @@
+[package]
+name = "moonbot_migrations"
+version = "0.3.2"
+edition = "2021"
+publish = false
+
+[lib]
+name = "moonbot_migrations"
+path = "src/lib.rs"
+
+[dependencies]
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+
+[dependencies.sea-orm-migration]
+version = "1.1.1"
+features = ["sqlx-postgres", "sqlx-sqlite", "runtime-tokio-native-tls"]

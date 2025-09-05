@@ -85,7 +85,7 @@ async fn _join(
 }
 
 /// Play a song in the voice channel you are connected in.
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "music-play")]
 pub async fn play(
     ctx: Context<'_>,
     #[description = "Search term or URL"]
@@ -209,7 +209,7 @@ pub async fn play(
 }
 
 /// Join the specified voice channel or the one you are currently in.
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "music-join")]
 pub async fn join(
     ctx: Context<'_>,
     #[description = "The channel ID to join to."]
@@ -230,7 +230,7 @@ pub async fn join(
 }
 
 /// Stop Playing music and Leave the current voice channel.
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "music-leave")]
 pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
     let manager = songbird::get(ctx.serenity_context()).await.unwrap().clone();
@@ -266,7 +266,7 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Pauses playing music
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "music-pause")]
 pub async fn pause(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
 
@@ -296,7 +296,7 @@ pub async fn pause(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Resumes playing music
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "music-resume")]
 pub async fn resume(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
 
@@ -327,7 +327,7 @@ pub async fn resume(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Skip the current song
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "music-skip")]
 pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
 
@@ -373,7 +373,7 @@ pub async fn skip(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Displays the current queue
-#[poise::command(slash_command)]
+#[poise::command(slash_command, rename = "music-queue")]
 pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
     let guild_id = ctx.guild_id().unwrap();
 
