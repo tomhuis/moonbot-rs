@@ -1,4 +1,4 @@
-# Moonbot (sunbot-rs fork)
+
 
 A Discord bot built with serenity + poise, SeaORM, and async-openai. It supports OpenAI and OpenAI-compatible local LLMs (Ollama, vLLM, LM Studio), global prompts editable from Discord, and optional hyper-personalization.
 
